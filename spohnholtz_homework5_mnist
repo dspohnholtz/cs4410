@@ -1,0 +1,71 @@
+#Created By: Dan Spohnholtz
+#Troy University, CS4410
+#Assessing Impact of PCA Dimensional Reduction
+#on MNIST Dataset
+
+import numpy as np
+import time, datetime
+from os import system, name
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import fetch_openml
+
+#Clear Screen
+def clear():
+    if name == 'nt':
+        _ = system('cls')
+    else:
+        _ = system('clear')
+
+#Display Processing Text
+clear()
+print('Processing...')
+
+#Load Dataset
+mnist = fetch_openml('mnist_784')
+
+#Split Data into Training and Testing Groups
+X_train, X_test, y_train, y_test = train_test_split(
+    mnist.data, mnist.target, random_state = 11)
+
+#Standardizing Data with StandardScaler
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+#Training Model with Logistic Regression (Before PCA)
+start = datetime.datetime.now()
+logRegr = LogisticRegression(solver='lbfgs', max_iter=10000)
+logRegr.fit(X_train, y_train)
+predictions = logRegr.predict(X_test)
+end = datetime.datetime.now()
+processTime = (end-start)
+prePCATime = datetime.timedelta.total_seconds(processTime)
+prePCA_acc = logRegr.score(X_test, y_test)
+
+#Applying PCA to Dataset
+pca = PCA(.95)
+X_train = pca.fit_transform(X_train)
+X_test = pca.transform(X_test)
+
+#Training Model wih Logistic Regression (After PCA)
+start = datetime.datetime.now()
+logRegr = LogisticRegression(solver='lbfgs', max_iter=10000)
+logRegr.fit(X_train, y_train)
+predictions = logRegr.predict(X_test)
+end = datetime.datetime.now()
+processTime = (end-start)
+postPCATime = datetime.timedelta.total_seconds(processTime)
+postPCA_acc = logRegr.score(X_test, y_test)
+
+#Measuring Model Performance
+clear()
+print('\u0332'.join('PRE-PCA PERFORMANCE METRICS'))
+print(f'Model Accuracy: {prePCA_acc:.3%}')
+print(f'Process Time: {prePCATime} seconds')
+print('\u0332'.join('POST-PCA PERFORMANCE METRICS'))
+print(f'Model Accuracy: {postPCA_acc:.3%}')
+print(f'Process Time: {postPCATime} seconds')
